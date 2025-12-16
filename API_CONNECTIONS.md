@@ -5,26 +5,17 @@ This document describes the API connections between frontend and backend.
 
 ## Backend Endpoints
 
-Total endpoints: 2
+Total endpoints: 0
 
 ### Endpoints List
-
-- **POST** `/api/auth/register`
-  - Function: `register_user`
-  - Operation: `CREATE`
-
-- **POST** `/api/auth/login`
-  - Function: `login_for_access_token`
-  - Operation: `CREATE`
 
 
 ## Frontend API Services
 
-Total services: 2
+Total services: 1
 
 ### Available Services
 
-- `auth_service.ts` - Auth API operations
 
 ## Usage Example
 
