@@ -46,18 +46,19 @@ npm run dev
 
 ## Features
 
-- User registration and login
-- Hotel search based on location and date
-- Viewing hotel details
-- Room booking
+- hotel search
+- room booking
+- booking management
+- user authentication
 
 ## API Endpoints
 
-- `POST /api/register` - Endpoint for user registration
-- `POST /api/login` - Endpoint for user login
-- `GET /api/hotels/search` - Endpoint to search hotels based on location and date
-- `GET /api/hotels/{hotel_id}` - Endpoint to view details of a hotel
-- `POST /api/bookings` - Endpoint to book a hotel room
+- `GET /api/hotels` - Retrieve a list of hotels based on search criteria (location, date range).
+- `GET /api/rooms/{hotel_id}` - Retrieve available rooms for a specific hotel.
+- `POST /api/bookings` - Book a room for a specific date range.
+- `DELETE /api/bookings/{booking_id}` - Cancel a booked room.
+- `POST /api/auth/register` - Register a new user account.
+- `POST /api/auth/login` - Login to an existing user account.
 
 ## License
 
