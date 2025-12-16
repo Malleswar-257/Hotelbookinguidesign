@@ -5,17 +5,36 @@ This document describes the API connections between frontend and backend.
 
 ## Backend Endpoints
 
-Total endpoints: 0
+Total endpoints: 4
 
 ### Endpoints List
+
+- **POST** `/auth/register`
+  - Function: `register_user`
+  - Operation: `CREATE`
+
+- **POST** `/bookings`
+  - Function: `create_booking`
+  - Operation: `CREATE`
+
+- **GET** `/bookings`
+  - Function: `get_bookings`
+  - Operation: `READ_ONE`
+
+- **GET** `/hotels`
+  - Function: `get_hotels`
+  - Operation: `READ_ONE`
 
 
 ## Frontend API Services
 
-Total services: 1
+Total services: 4
 
 ### Available Services
 
+- `auth_service.ts` - Auth API operations
+- `bookings_service.ts` - Bookings API operations
+- `hotels_service.ts` - Hotels API operations
 
 ## Usage Example
 
