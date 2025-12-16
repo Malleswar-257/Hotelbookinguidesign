@@ -1,17 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from pydantic_settings import BaseSettings
-from app.models import User
-from app.auth import authenticate_user, get_current_active_user
-
-DATABASE_URL = "postgresql+asyncpg://user:password@localhost/db"
-engine = create_async_engine(DATABASE_URL)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./app.db"
-    SECRET_KEY: str = "dev-secret-key-change-in-production"
+from fastapi import FastAPI, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.schemas import UserCreate, User, Hotel, Room, Booking
+from app.database import get_db, create_user, authenticate_user, create_hotel, create_room, get_bookings_by_status_and_rating
+from app.auth import get_current_active_user, get_admin_role
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -25,22 +16,18 @@ app.add_middleware(
 
 app = FastAPI()
 
-@app.post("/auth/register")
-async def register_user(request: Request, name: str, email: str, password: str):
-# Implement registration logic here
-    pass
+@app.post("/auth/register", response_model=User)
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    return create_user(db=db, user=user)
 
-@app.post("/auth/login")
-async def login_user(request: Request, email: str, password: str):
-# Implement login logic here
-    pass
+@app.post("/bookings", response_model=Booking)
+def create_booking(user_id: int, room_id: int, check_in: str, check_out: str, price: float, status: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    return create_room(db=db, user_id=user_id, room_id=room_id, check_in=check_in, check_out=check_out, price=price, status=status)
 
-@app.get("/hotels")
-async def get_hotels(current_user: User = Depends(get_current_active_user)):
-# Implement hotels retrieval logic here
-    pass
+@app.get("/bookings", response_model=list[Booking])
+def get_bookings(status: str = None, rating: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    return get_bookings_by_status_and_rating(db=db, status=status, rating=rating)
 
-@app.get("/bookings")
-async def get_bookings(current_user: User = Depends(get_current_active_user)):
-# Implement bookings retrieval logic here
-    pass
+@app.get("/hotels", response_model=list[Hotel])
+def get_hotels(rating: int = None, status: str = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
+    return create_room(db=db, user_id=user_id, room_id=room_id, check_in=check_in, check_out=check_out, price=price, status=status)
