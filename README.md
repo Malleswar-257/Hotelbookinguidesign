@@ -342,7 +342,7 @@ Hotelbookinguidesign/
 cd backend
 # Follow backend-specific setup instructions in backend/README.md
 python -m venv .venv
-source .venv/bin/activate  # or .venv\Scriptsctivate on Windows
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
@@ -357,7 +357,15 @@ npm run dev
 
 ## Features
 
-- No features specified
+- {'name': 'Registration', 'description': 'User can register with name, email, and password.'}
+- {'name': 'Login', 'description': 'User can login using email and password.'}
+- {'name': 'Hotel Search', 'description': 'User can search for hotels by city or other criteria.'}
+- {'name': 'Room Details', 'description': 'User can view details of a specific room, including availability and price.'}
+- {'name': 'Booking', 'description': 'User can book a room by selecting check-in and check-out dates.'}
+- {'name': 'Payment', 'description': 'User can complete the booking process with payment information.'}
+- {'name': 'Booking Management', 'description': 'Admin users can manage booked rooms, including cancellations and status updates.'}
+- {'name': 'Hotel Management', 'description': 'Admin users can register new hotels, update room details, and set prices.'}
+- {'name': 'Booking Dashboard', 'description': 'Admin users can view a dashboard of all bookings and hotel room availability.'}
 
 ## API Endpoints
 
