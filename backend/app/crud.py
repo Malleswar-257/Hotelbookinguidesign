@@ -1,14 +1,13 @@
 from sqlalchemy.orm import Session
-from models import User, Hotel
-def get_user_by_email(db: Session, email: str):
-    return db.query(User).filter(User.email == email).first()
-def create_user(db: Session, user_data: UserCreate):
-    hashed_password = user_data.password  # In a real app, hash the password
-    user = User(name=user_data.name, email=user_data.email, password=hashed_password, role='user')
-    db.add(user)
+from app import models, schemas
+
+def create_user(db: Session, user: schemas.UserCreate):
+    fake_hashed_password = user.password + "notreallyhashed"
+    db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
+    db.add(db_user)
     db.commit()
-    db.refresh(user)
-    return user
-def search_hotels(db: Session, query: HotelSearchQuery):
-    hotels = db.query(Hotel).filter(Hotel.city == query.city).all() if query.city else db.query(Hotel).all()
-    return hotels
+    db.refresh(db_user)
+    return db_user
+
+def get_users(db: Session, skip: int = 0, limit: int = 10):
+    return db.query(models.User).offset(skip).limit(limit).all()
