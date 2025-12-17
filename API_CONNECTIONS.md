@@ -5,7 +5,7 @@ This document describes the API connections between frontend and backend.
 
 ## Backend Endpoints
 
-Total endpoints: 2
+Total endpoints: 3
 
 ### Endpoints List
 
@@ -17,15 +17,20 @@ Total endpoints: 2
   - Function: `login_for_access_token`
   - Operation: `CREATE`
 
+- **GET** `/users`
+  - Function: `read_users`
+  - Operation: `READ_ONE`
+
 
 ## Frontend API Services
 
-Total services: 3
+Total services: 4
 
 ### Available Services
 
 - `register_service.ts` - Register API operations
 - `login_service.ts` - Login API operations
+- `users_service.ts` - Users API operations
 
 ## Usage Example
 
