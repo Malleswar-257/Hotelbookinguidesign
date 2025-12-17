@@ -1,33 +1,40 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from app.schemas import UserCreate, User, Hotel, Room, Booking
-from app.database import get_db, create_user, authenticate_user, create_hotel, create_room, get_bookings_by_status_and_rating
-from app.auth import get_current_active_user, get_admin_role
+from typing import List, Optional
+from db.session import get_db
+from schemas import UserCreate, UserResponse, HotelSearchQuery, HotelResponse
+from crud import user_crud, hotel_crud
+from auth import authenticate_user, create_access_token
+from models import User, Hotel
+
+app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app = FastAPI()
 
-@app.post("/auth/register", response_model=User)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db=db, user=user)
+@app.post("/register", response_model=UserResponse)
+def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    if user_crud.get_user_by_email(db, email=user_data.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = user_crud.create_user(db=db, user_data=user_data)
+    return UserResponse.from_orm(user)
 
-@app.post("/bookings", response_model=Booking)
-def create_booking(user_id: int, room_id: int, check_in: str, check_out: str, price: float, status: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
-    return create_room(db=db, user_id=user_id, room_id=room_id, check_in=check_in, check_out=check_out, price=price, status=status)
-
-@app.get("/bookings", response_model=list[Booking])
-def get_bookings(status: str = None, rating: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
-    return get_bookings_by_status_and_rating(db=db, status=status, rating=rating)
-
-@app.get("/hotels", response_model=list[Hotel])
-def get_hotels(rating: int = None, status: str = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
-    return create_room(db=db, user_id=user_id, room_id=room_id, check_in=check_in, check_out=check_out, price=price, status=status)
+@app.post("/login", response_model=UserResponse)
+def login_for_access_token(form_data: dict, db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.get('email'), form_data.get('password'))
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={
+}
+)
