@@ -1,6 +1,5 @@
 fastapi==0.104.0
 uvicorn==0.24.0
-typing-extensions==4.5.0
+typing-extensions>=3.7.4
 python-dotenv>=1.0.0
-sqlalchemy==2.0.0
-cryptography==37.0.2, 
+sqlalchemy==2.0.0, 
