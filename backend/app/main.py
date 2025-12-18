@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app import crud, models, schemas
-from app.database import engine, get_db
-from app.security import authenticate_user, create_access_token
+from pydantic import BaseModel
+from typing import Optional, List
+from passlib.context import CryptContext
+from datetime import datetime
+from app import models, schemas, crud, database, security
 
-models.Base.metadata.create_all(bind=engine)
-
+db = database.get_db()
 app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,23 +20,13 @@ app.add_middleware(
 )
 
 
-@app.post("/register", response_model=schemas.User)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db=db, user=user)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@app.post("/login", response_model=schemas.Token)
-def login_for_access_token(form_data: schemas.LoginForm, db: Session = Depends(get_db)):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(data={'sub': user.email})
-    return {'access_token': access_token, 'token_type': 'bearer'}
+@app.post("/auth/register", response_model=schemas.User)
+def register_user(user: schemas.UserCreate, db: Session = Depends(db)):    existing_user = crud.get_user_by_email(email=user.email, db=db)    if existing_user:        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")    hashed_password = security.get_password_hash(user.password)    return crud.create_user(user=user, db=db)
 
-@app.get("/users", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
+@app.post("/auth/login", response_model=schemas.Token)
+def login_for_access_token(form_data: schemas.TokenRequestForm, db: Session = Depends(db)):    user = authenticate_user(email=form_data.email, password=form_data.password, db=db)    if not user:        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password", headers={"WWW-Authenticate": "Bearer"})    access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)    access_token = security.create_access_token(data={
+    pass  # TODO: Complete implementation
+}
+)
