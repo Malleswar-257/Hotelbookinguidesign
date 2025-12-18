@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { apiService } from '../services/api';
+
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group@1.1.2";
 import { type VariantProps } from "class-variance-authority@0.7.1";
 
