@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { apiService } from '../services/api';
-
 import * as RechartsPrimitive from "recharts@2.15.2";
 
 import { cn } from "./utils";
