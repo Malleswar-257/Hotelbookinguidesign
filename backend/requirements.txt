@@ -1,4 +1,5 @@
 fastapi==0.104.0
 uvicorn==0.24.0
-typing-extensions>=3.7.4
-dataclasses-json>=0.5.6, 
+sqlalchemy>=2.0.0
+pydantic>=2.7.4
+databases[postgresql]>=1.0.0, 
