@@ -9,13 +9,13 @@ Total endpoints: 2
 
 ### Endpoints List
 
-- **POST** `/register`
-  - Function: `register_user`
-  - Operation: `CREATE`
+- **GET** `/items`
+  - Function: `read_items`
+  - Operation: `READ_ONE`
 
-- **GET** `/login`
-  - Function: `login_user`
-  - Operation: `READ`
+- **POST** `/token`
+  - Function: `login_for_access_token`
+  - Operation: `CREATE`
 
 
 ## Frontend API Services
@@ -24,8 +24,8 @@ Total services: 3
 
 ### Available Services
 
-- `register_service.ts` - Register API operations
-- `login_service.ts` - Login API operations
+- `items_service.ts` - Items API operations
+- `token_service.ts` - Token API operations
 
 ## Usage Example
 
