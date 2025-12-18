@@ -1,6 +1,4 @@
 import * as React from "react";
-import { apiService } from '../services/api';
-
 
 import { cn } from "./utils";
 
