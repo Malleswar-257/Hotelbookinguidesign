@@ -1,4 +1,7 @@
+import React, { useState, useEffect } from 'react';
 import { Search, Calendar, MessageCircle, User, Bell, Hotel, MapPin, Star, TrendingUp } from 'lucide-react';
+import { apiService } from '../services/api';
+
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface DashboardProps {
@@ -6,15 +9,41 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const recentBookings = [
-    { id: 1, hotel: 'Grand Plaza Hotel', location: 'New York', date: 'Dec 20-23, 2024', status: 'Confirmed' },
-    { id: 2, hotel: 'Beach Resort Paradise', location: 'Miami', date: 'Jan 5-10, 2025', status: 'Pending' },
-  ];
+  const [recentBookings, setRecentbookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const result = await apiService.getData();
+        setRecentbookings(result);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
-  const notifications = [
-    { id: 1, message: 'Your booking at Grand Plaza Hotel is confirmed!', time: '2 hours ago' },
-    { id: 2, message: 'Special offer: 20% off on weekend stays', time: '5 hours ago' },
-  ];
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const result = await apiService.getData();
+        setNotifications(result);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen">
