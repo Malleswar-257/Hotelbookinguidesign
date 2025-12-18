@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
 "use client";
 
 import * as React from "react";
-import { apiService } from '../services/api';
-
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react@8.6.0";
