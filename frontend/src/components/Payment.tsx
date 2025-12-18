@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { apiService } from '../services/api';
-
 import { CreditCard, Lock, Check, Calendar, User, Home, Mail, Phone, Shield, MessageCircle } from 'lucide-react';
 
 interface PaymentProps {
