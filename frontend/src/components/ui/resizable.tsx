@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { apiService } from '../services/api';
-
 import { GripVerticalIcon } from "lucide-react@0.487.0";
 import * as ResizablePrimitive from "react-resizable-panels@2.1.7";
 
