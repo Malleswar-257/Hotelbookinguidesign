@@ -6,6 +6,11 @@ export const AuthService = {
   async create(data) {
     return apiClient.post('/auth/register', data);
   }
+
+  // Create new auth
+  async create(data) {
+    return apiClient.post('/auth/login', data);
+  }
 };
 
 export default AuthService;
