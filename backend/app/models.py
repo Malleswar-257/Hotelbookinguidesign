@@ -1,40 +1,44 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DECIMAL, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+
 Base = declarative_base()
+
 class User(Base):
     __tablename__ = "users"
+
     user_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
-    role = Column(String)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password = Column(String(255), nullable=False)
+    role = Column(String(255), nullable=False)
+
+
 class Hotel(Base):
     __tablename__ = "hotels"
+
     hotel_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    city = Column(String, index=True)
-    description = Column(String)
-    rating = Column(Integer)
+    name = Column(String(255), nullable=False)
+    city = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    rating = Column(Integer, nullable=False)
+
+
 class Room(Base):
     __tablename__ = "rooms"
+
     room_id = Column(Integer, primary_key=True, index=True)
-    hotel_id = Column(Integer, ForeignKey("hotels.hotel_id"))
-    type = Column(String)
-    price = Column(String)
-    capacity = Column(Integer)
+    hotel_id = Column(Integer, ForeignKey("hotels.hotel_id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    price_per_night = Column(DECIMAL(10, 2), nullable=False)
+
+
 class Booking(Base):
     __tablename__ = "bookings"
+
     booking_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
-    room_id = Column(Integer, ForeignKey("rooms.room_id"))
-    check_in_date = Column(String)
-    check_out_date = Column(String)
-def create_user(email: str, password: str, role: str):
-    return User(email=email, password=password, role=role)
-def create_hotel(name: str, city: str):
-    return Hotel(name=name, city=city)
-def create_room(type: str, price: str, capacity: int, hotel_id: int):
-    return Room(type=type, price=price, capacity=capacity, hotel_id=hotel_id)
-def create_booking(user_id: int, room_id: int, check_in_date: str, check_out_date: str):
-    return Booking(user_id=user_id, room_id=room_id, check_in_date=check_in_date, check_out_date=check_out_date)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False)
+    check_in = Column(DateTime, nullable=False)
+    check_out = Column(DateTime, nullable=False)
+    price = Column(DECIMAL(10, 2), nullable=False)
