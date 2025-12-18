@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { apiService } from '../services/api';
+
 import { ChevronLeft, ChevronRight } from "lucide-react@0.487.0";
 import { DayPicker } from "react-day-picker@8.10.1";
 
