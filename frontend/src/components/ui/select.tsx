@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { apiService } from '../services/api';
-
 import * as SelectPrimitive from "@radix-ui/react-select@2.1.6";
 import {
   CheckIcon,
