@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { apiService } from '../services/api';
-
 import * as SliderPrimitive from "@radix-ui/react-slider@1.2.3";
 
 import { cn } from "./utils";
