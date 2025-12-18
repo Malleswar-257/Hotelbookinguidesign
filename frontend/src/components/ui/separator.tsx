@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { apiService } from '../services/api';
+
 import * as SeparatorPrimitive from "@radix-ui/react-separator@1.1.2";
 
 import { cn } from "./utils";
