@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { apiService } from '../services/api';
-
 import { Search as SearchIcon, MapPin, Calendar, Users, Star, Wifi, Coffee, Dumbbell, Filter, SlidersHorizontal } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
