@@ -1,22 +1,11 @@
 from pydantic import BaseModel
+
 class UserCreate(BaseModel):
+    name: str
     email: str
     password: str
-class HotelCreate(BaseModel):
-    name: str
-class RoomCreate(BaseModel):
-    type: str
-class BookingCreate(BaseModel):
+
+class UserRead(BaseModel):
     user_id: int
-class Booking(BaseModel):
-    booking_id: int
-class User(BaseModel):
-    user_id: int
-class Hotel(BaseModel):
-    hotel_id: int
     name: str
-class Room(BaseModel):
-    room_id: int
-class Token(BaseModel):
-    access_token: str
-token_type: str
+    email: str
