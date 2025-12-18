@@ -357,7 +357,14 @@ npm run dev
 
 ## Features
 
-- No features specified
+- {'name': 'User Registration', 'description': 'Enable users to register with their name, email, and password.'}
+- {'name': 'User Login', 'description': 'Allow users to log in using their email and password.'}
+- {'name': 'Hotel Search', 'description': 'Provide a search functionality for hotels by city or other criteria.'}
+- {'name': 'Room Details', 'description': 'Display detailed information about each room including type, price, capacity, and availability.'}
+- {'name': 'Booking Rooms', 'description': 'Enable users to book rooms by providing user ID, room ID, check-in date, and check-out date.'}
+- {'name': 'Manage Hotels (Admin)', 'description': 'Allow admin users to register new hotels, manage existing ones, update prices and availability, and view bookings.'}
+- {'name': 'Manage Rooms (Admin)', 'description': 'Enable admin users to add, edit, or delete rooms within a hotel.'}
+- {'name': 'Booking Dashboard (Admin)', 'description': 'Provide an interface for admin users to view all bookings, filter by status, and manage booking details.'}
 
 ## API Endpoints
 
