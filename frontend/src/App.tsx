@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { apiService } from '../services/api';
+
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 import { Search } from './components/Search';
