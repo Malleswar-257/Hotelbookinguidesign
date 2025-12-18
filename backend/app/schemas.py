@@ -1,48 +1,22 @@
 from pydantic import BaseModel
 class UserCreate(BaseModel):
-    name: str
     email: str
     password: str
-class User(BaseModel):
-    id: int
-    name: str
-    email: str
 class HotelCreate(BaseModel):
     name: str
-    city: str
-description: Optional[str]
-rating: Optional[float]
-class Hotel(BaseModel):
-    id: int
-    name: str
-    city: str
-description: Optional[str]
-rating: Optional[float]
 class RoomCreate(BaseModel):
-    hotel_id: int
-type: str
-price: float
-capacity: int
-availability_count: int
-class Room(BaseModel):
-    id: int
-    hotel_id: int
-type: str
-price: float
-capacity: int
-availability_count: int
+    type: str
 class BookingCreate(BaseModel):
     user_id: int
-room_id: int
-check_in: datetime
-check_out: datetime
-price: float
-status: str
 class Booking(BaseModel):
-    id: int
+    booking_id: int
+class User(BaseModel):
     user_id: int
-room_id: int
-check_in: datetime
-check_out: datetime
-price: float
-status: str
+class Hotel(BaseModel):
+    hotel_id: int
+    name: str
+class Room(BaseModel):
+    room_id: int
+class Token(BaseModel):
+    access_token: str
+token_type: str
