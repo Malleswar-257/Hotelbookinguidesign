@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { apiService } from '../services/api';
+
 import { Command as CommandPrimitive } from "cmdk@1.1.1";
 import { SearchIcon } from "lucide-react@0.487.0";
 
