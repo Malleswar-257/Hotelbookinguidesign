@@ -1,7 +1,6 @@
-fastapi==0.68.1
-gunicorn==20.1.0
-sqlalchemy==1.4.22
-typing-extensions==3.7.4.3
-databases==1.0.4
-uvicorn==0.15.0
-python-multipart==0.0.5
+fastapi==0.104.1
+uvicorn==0.24.0
+typing-extensions>=3.7.4.3
+databases[postgresql]>=1.1.0
+sqlalchemy>=2.0.0,
+python-dotenv>=1.0.0, 
