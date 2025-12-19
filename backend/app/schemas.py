@@ -1,36 +1,34 @@
-from pydantic import BaseModel
-from datetime import date
+from pydantic import BaseModel, EmailStr, Field
 
-class UserCreate(BaseModel):
-    email: str
+class User(BaseModel):
+    name: str = Field(..., min_length=1)
+    email: EmailStr
     password: str
+    role: str = "user"
 
-class UserLogin(BaseModel):
-    email: str
-    password: str
+class UserInDB(User):
+    user_id: int
 
-class HotelResponse(BaseModel):
+class Hotel(BaseModel):
     hotel_id: int
     name: str
+    city: str
+    description: str
     rating: int
-    status: str
 
-class RoomResponse(BaseModel):
+class Room(BaseModel):
     room_id: int
     hotel_id: int
+    type: str
     price: float
+    capacity: int
     availability_count: int
 
-class BookingRequest(BaseModel):
-    room_id: int
-    check_in: date
-    check_out: date
-
-class BookingResponse(BaseModel):
+class Booking(BaseModel):
     booking_id: int
     user_id: int
     room_id: int
-    check_in: date
-    check_out: date
+    check_in: datetime
+    check_out: datetime
     price: float
     status: str
