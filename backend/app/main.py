@@ -1,24 +1,21 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from datetime import datetime
-import os
-from dotenv import load_dotenv
-from app.database import SessionLocal, engine, Base
-from app.models import User, Hotel, Room, Booking
-from app.schemas import UserCreate, UserLogin, HotelResponse, RoomResponse, BookingRequest, BookingResponse
-from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime, timedelta
+import jwt
+from typing import List, Optional
+from app.schemas import User, UserInDB, Hotel, Room, Booking
+from app.database import SessionLocal, engine, get_db, Base
+from app.models import User as UserModel, Hotel as HotelModel, Room as RoomModel, Booking as BookingModel
 
-load_dotenv()
-
-DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./app.db')
-SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+DATABASE_URL = "sqlite:///./app.db"
+SECRET_KEY = "dev-secret-key-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-token_url = "token"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
@@ -32,31 +29,81 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+api_router = APIRouter(prefix="/api", tags=["users"])
 
 # Dependency
-
-def get_db():
+async def get_db():
     db = SessionLocal()
     try:
         yield db
 finally:
     db.close()
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+# Pydantic models / schemas
+class UserBase(BaseModel):
+    name: str = Field(..., min_length = 1)
+    email: EmailStr
 
-def get_user(db: Session, email: str):
-    return db.query(User).filter(User.email == email).first()
+class UserCreate(UserBase):
+    password: str
 
-def authenticate_user(db: Session, email: str, password: str):
-    user = get_user(db, email)
-    if not user:
-        return False
-    if not verify_password(password, user.password):
+class UserInDB(UserBase):
+    user_id: int
+
+class HotelBase(BaseModel):
+    hotel_id: int
+    name: str
+    city: str
+    description: str
+    rating: int
+
+class RoomBase(BaseModel):
+    room_id: int
+    hotel_id: int
+    type: str
+    price: float
+    capacity: int
+    availability_count: int
+
+class BookingBase(BaseModel):
+    booking_id: int
+    user_id: int
+    room_id: int
+    check_in: datetime
+    check_out: datetime
+    price: float
+    status: str
+
+# CRUD operations
+def get_user(email: str, db: Session = Depends(get_db)):
+    return db.query(UserModel).filter(UserModel.email == email).first()
+
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    hashed_password = pwd_context.hash(user.password)
+    user_model = UserModel(**user.dict(), hashed_password = hashed_password)
+    db.add(user_model)
+    db.commit()
+    db.refresh(user_model)
+    return user_model
+
+def get_hotel(hotel_id: int, db: Session = Depends(get_db)):
+    return db.query(HotelModel).filter(HotelModel.hotel_id == hotel_id).first()
+
+def create_booking(booking: BookingBase, db: Session = Depends(get_db)):
+    booking_model = BookingModel(**booking.dict())
+    db.add(booking_model)
+    db.commit()
+    db.refresh(booking_model)
+    return booking_model
+
+# Authentication
+async def authenticate_user(email: str, password: str):
+    user = await get_user(email)
+    if not user or not pwd_context.verify(password, user.hashed_password):
         return False
     return user
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -66,7 +113,7 @@ else:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
     return encoded_jwt
 
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code = status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -77,48 +124,17 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = TokenData(email = email)
     except JWTError:
         raise credentials_exception
-    user = get_user(db, email = token_data.email)
+    user = await get_user(email = email)
     if user is None:
         raise credentials_exception
     return user
 
-def create_user(db: Session, user: UserCreate):
-    fake_hashed_password = pwd_context.hash(user.password)
-    db_user = User(email=user.email, hashed_password=fake_hashed_password, role="user")
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-def get_hotels(db: Session, rating: str = None, status: str = None):
-    query = db.query(Hotel)
-    if rating:
-        query = query.filter(Hotel.rating == int(rating))
-    if status:
-        query = query.filter(Hotel.status == status)
-    return query.all()
-
-def get_bookings(db: Session, user_id: int = None, room_id: int = None):
-    query = db.query(Booking)
-    if user_id:
-        query = query.filter(Booking.user_id == user_id)
-    if room_id:
-        query = query.filter(Booking.room_id == room_id)
-    return query.all()
-
-@app.post("/auth/register", response_model=UserResponse)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = get_user(db, email = user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return create_user(db = db, user = user)
-
-@app.post("/auth/login", response_model=UserResponse)
-def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    user = authenticate_user(db, email = user.email, password = user.password)
+# API endpoints
+@api_router.post("/token", response_model=UserInDB)
+def login_for_access_token(form_data: UserCreate, db: Session = Depends(get_db)):
+    user = await authenticate_user(form_data.email, form_data.password)
     if not user:
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
