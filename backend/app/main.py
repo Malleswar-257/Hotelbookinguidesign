@@ -1,22 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
-from pydantic import BaseModel, EmailStr, Field
+from fastapi import FastAPI, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
-import jwt
-from typing import List, Optional
-from app.schemas import User, UserInDB, Hotel, Room, Booking
-from app.database import SessionLocal, engine, get_db, Base
-from app.models import User as UserModel, Hotel as HotelModel, Room as RoomModel, Booking as BookingModel
-
-DATABASE_URL = "sqlite:///./app.db"
-SECRET_KEY = "dev-secret-key-change-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
+dotenv_path = ".env"
+from dotenv import load_dotenv
+import os
+load_dotenv(dotenv_path)
+from app.database import Base, get_db, engine, User, Hotel, Room, Booking, create_tables
 app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,119 +20,144 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-api_router = APIRouter(prefix="/api", tags=["users"])
-
-# Dependency
-async def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-finally:
-    db.close()
-
-# Pydantic models / schemas
-class UserBase(BaseModel):
-    name: str = Field(..., min_length = 1)
-    email: EmailStr
-
-class UserCreate(UserBase):
-    password: str
-
-class UserInDB(UserBase):
-    user_id: int
-
-class HotelBase(BaseModel):
-    hotel_id: int
-    name: str
-    city: str
-    description: str
-    rating: int
-
-class RoomBase(BaseModel):
-    room_id: int
-    hotel_id: int
-    type: str
-    price: float
-    capacity: int
-    availability_count: int
-
-class BookingBase(BaseModel):
-    booking_id: int
-    user_id: int
-    room_id: int
-    check_in: datetime
-    check_out: datetime
-    price: float
-    status: str
-
-# CRUD operations
-def get_user(email: str, db: Session = Depends(get_db)):
-    return db.query(UserModel).filter(UserModel.email == email).first()
-
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    hashed_password = pwd_context.hash(user.password)
-    user_model = UserModel(**user.dict(), hashed_password = hashed_password)
-    db.add(user_model)
-    db.commit()
-    db.refresh(user_model)
-    return user_model
-
-def get_hotel(hotel_id: int, db: Session = Depends(get_db)):
-    return db.query(HotelModel).filter(HotelModel.hotel_id == hotel_id).first()
-
-def create_booking(booking: BookingBase, db: Session = Depends(get_db)):
-    booking_model = BookingModel(**booking.dict())
-    db.add(booking_model)
-    db.commit()
-    db.refresh(booking_model)
-    return booking_model
-
-# Authentication
-async def authenticate_user(email: str, password: str):
-    user = await get_user(email)
-    if not user or not pwd_context.verify(password, user.hashed_password):
+crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+settings = Settings(DATABASE_URL=os.getenv("DATABASE_URL", "sqlite:///./test.db"))
+Base.metadata.create_all(bind=engine)
+def authenticate_user(email: str, password: str):
+    user = get_user_by_email(db, email=email)
+    if not user or not crypt_context.verify(password, user.password):
         return False
     return user
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-else:
-    expire = datetime.utcnow() + timedelta(minutes = 15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
-    return encoded_jwt
-
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
-        status_code = status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
+        token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = await get_user(email = email)
+    user = get_user_by_email(db, email=token_data.email)
     if user is None:
         raise credentials_exception
     return user
-
-# API endpoints
-@api_router.post("/token", response_model=UserInDB)
-def login_for_access_token(form_data: UserCreate, db: Session = Depends(get_db)):
-    user = await authenticate_user(form_data.email, form_data.password)
+def get_current_active_user(current_user: User = Depends(get_current_user)):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+class TokenData(BaseModel):
+    email: Optional[str] = None
+class UserCreate(BaseModel):
+    name: str = Field(...)
+    email: str = Field(...)
+    password: str = Field(...)
+class HotelCreate(BaseModel):
+    name: str = Field(...)
+    city: str = Field(...)
+    description: Optional[str] = None
+    rating: Optional[int] = None
+class RoomCreate(BaseModel):
+    hotel_id: int = Field(...)
+    type: str = Field(...)
+    price: float = Field(...)
+    capacity: int = Field(...)
+    availability_count: Optional[int] = None
+class BookingCreate(BaseModel):
+    user_id: int = Field(...)
+    room_id: int = Field(...)
+    check_in: str = Field(...)
+    check_out: str = Field(...)
+    status: str = Field(...)
+class UserOut(BaseModel):
+    user_id: int
+    name: str
+    email: str
+class HotelOut(BaseModel):
+    hotel_id: int
+    name: str
+    city: str
+db = Depends(get_db)
+@app.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    hashed_password = crypt_context.hash(user.password)
+    db_user = User(name=user.name, email=user.email, password=hashed_password, role="user")
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+@app.get("/users", response_model=List[UserOut], status_code=status.HTTP_200_OK)
+def read_users(email: Optional[str] = None, rating: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(User)
+    if email is not None:
+        query = query.filter(User.email == email)
+    if rating is not None:
+        query = query.filter(User.rating == rating)
+    if status is not None:
+        query = query.filter(User.status == status)
+    return query.all()
+@app.post("/hotels", response_model=HotelOut, status_code=status.HTTP_201_CREATED)
+def create_hotel(hotel: HotelCreate, db: Session = Depends(get_db)):
+    db_hotel = Hotel(name=hotel.name, city=hotel.city, description=hotel.description, rating=hotel.rating)
+    db.add(db_hotel)
+    db.commit()
+    db.refresh(db_hotel)
+    return db_hotel
+@app.get("/hotels", response_model=List[HotelOut], status_code=status.HTTP_200_OK)
+def read_hotels(name: Optional[str] = None, city: Optional[str] = None, rating: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(Hotel)
+    if name is not None:
+        query = query.filter(Hotel.name == name)
+    if city is not None:
+        query = query.filter(Hotel.city == city)
+    if rating is not None:
+        query = query.filter(Hotel.rating == rating)
+    return query.all()
+@app.post("/rooms", response_model=RoomOut, status_code=status.HTTP_201_CREATED)
+def create_room(room: RoomCreate, db: Session = Depends(get_db)):
+    db_room = Room(hotel_id=room.hotel_id, type=room.type, price=room.price, capacity=room.capacity, availability_count=room.availability_count)
+    db.add(db_room)
+    db.commit()
+    db.refresh(db_room)
+    return db_room
+@app.post("/bookings", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
+def create_booking(booking: BookingCreate, db: Session = Depends(get_db)):
+    db_booking = Booking(user_id=booking.user_id, room_id=booking.room_id, check_in=booking.check_in, check_out=booking.check_out, price=booking.price, status=booking.status)
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
+@app.get("/bookings", response_model=List[BookingOut], status_code=status.HTTP_200_OK)
+def read_bookings(user_id: Optional[int] = None, room_id: Optional[int] = None, check_in: Optional[str] = None, check_out: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Booking)
+    if user_id is not None:
+        query = query.filter(Booking.user_id == user_id)
+    if room_id is not None:
+        query = query.filter(Booking.room_id == room_id)
+    if check_in is not None:
+        query = query.filter(Booking.check_in == check_in)
+    if check_out is not None:
+        query = query.filter(Booking.check_out == check_out)
+    if status is not None:
+        query = query.filter(Booking.status == status)
+    return query.all()
+@app.post("/token", response_model=Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
-            status_code = status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={
 }
